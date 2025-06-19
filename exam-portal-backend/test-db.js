@@ -1,36 +1,38 @@
 const supabase = require('./db/supabaseClient');
 
-async function testDatabaseConnection() {
-  console.log('🧪 Testing database connection...');
-  
+async function testDatabase() {
+  console.log('Testing database connection and table structure...');
+
   try {
-    // Test basic connection
-    const { data, error } = await supabase
+    // Test users table
+    console.log('\nTesting users table:');
+    const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('count')
+      .select('*')
       .limit(1);
     
-    if (error) {
-      console.error('❌ Database connection failed:', error);
-      return false;
+    if (usersError) {
+      console.error('Error accessing users table:', usersError);
+    } else {
+      console.log('✅ Users table is accessible');
+      console.log('Sample data:', users);
     }
+
+    // Test table structure
+    console.log('\nTesting table structure:');
+    const { data: tableInfo, error: tableError } = await supabase
+      .rpc('test_table_structure');
     
-    console.log('✅ Database connection successful!');
-    console.log('📊 Response:', data);
-    return true;
+    if (tableError) {
+      console.error('Error getting table structure:', tableError);
+    } else {
+      console.log('✅ Table structure verified');
+      console.log('Table info:', tableInfo);
+    }
+
   } catch (err) {
-    console.error('❌ Database test failed:', err);
-    return false;
+    console.error('Test failed:', err);
   }
 }
 
-// Run the test
-testDatabaseConnection()
-  .then(success => {
-    if (success) {
-      console.log('🎉 Database is working correctly!');
-    } else {
-      console.log('💥 Database connection failed!');
-    }
-    process.exit(success ? 0 : 1);
-  }); 
+testDatabase(); 

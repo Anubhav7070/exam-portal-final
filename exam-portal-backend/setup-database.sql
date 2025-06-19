@@ -76,6 +76,37 @@ CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON submissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_exam_id ON submissions(exam_id);
 CREATE INDEX IF NOT EXISTS idx_results_user_id ON results(user_id);
 
+-- Drop existing policies on users table
+DROP POLICY IF EXISTS "Users can read own data" ON users;
+DROP POLICY IF EXISTS "Anyone can create users" ON users;
+
+-- Create new policies for users table
+-- Allow users to read their own data
+CREATE POLICY "Users can read own data" ON users 
+FOR SELECT USING (auth.uid()::text = id::text);
+
+-- Allow anyone to create new users (for signup)
+CREATE POLICY "Anyone can create users" ON users 
+FOR INSERT WITH CHECK (true);
+
+-- Create policies for other tables
+-- Students can read exams
+CREATE POLICY "Students can read exams" ON exams FOR SELECT USING (true);
+
+-- Admins can manage exams
+CREATE POLICY "Admins can manage exams" ON exams FOR ALL USING (
+  EXISTS (SELECT 1 FROM users WHERE users.id::text = auth.uid()::text AND users.role = 'admin')
+);
+
+-- Users can read their own submissions
+CREATE POLICY "Users can read own submissions" ON submissions FOR SELECT USING (user_id::text = auth.uid()::text);
+
+-- Users can create their own submissions
+CREATE POLICY "Users can create own submissions" ON submissions FOR INSERT WITH CHECK (user_id::text = auth.uid()::text);
+
+-- Users can read their own results
+CREATE POLICY "Users can read own results" ON results FOR SELECT USING (user_id::text = auth.uid()::text);
+
 -- Insert sample admin user (password: admin123)
 INSERT INTO users (id, name, email, password, role) 
 VALUES (
@@ -96,29 +127,4 @@ VALUES (
     'student'
 ) ON CONFLICT (email) DO NOTHING;
 
--- Create policies (basic examples - adjust based on your needs)
--- Users can read their own data
-CREATE POLICY "Users can read own data" ON users FOR SELECT USING (auth.uid()::text = id::text);
-
--- Students can read exams
-CREATE POLICY "Students can read exams" ON exams FOR SELECT USING (true);
-
--- Admins can manage exams
-CREATE POLICY "Admins can manage exams" ON exams FOR ALL USING (
-  EXISTS (SELECT 1 FROM users WHERE users.id::text = auth.uid()::text AND users.role = 'admin')
-);
-
--- Users can read their own submissions
-CREATE POLICY "Users can read own submissions" ON submissions FOR SELECT USING (user_id::text = auth.uid()::text);
-
--- Users can create their own submissions
-CREATE POLICY "Users can create own submissions" ON submissions FOR INSERT WITH CHECK (user_id::text = auth.uid()::text);
-
--- Users can read their own results
-CREATE POLICY "Users can read own results" ON results FOR SELECT USING (user_id::text = auth.uid()::text);
-
 -- Supabase project configuration
-SUPABASE_URL=your_project_url
-SUPABASE_KEY=your_service_role_key
-JWT_SECRET=your_secret_key
-PORT=5000
