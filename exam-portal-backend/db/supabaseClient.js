@@ -11,7 +11,7 @@ console.log('Key:', supabaseKey ? 'Set (length: ' + supabaseKey.length + ')' : '
 
 // Create a mock client if environment variables are not set
 let supabase;
-if (supabaseUrl && supabaseKey && supabaseUrl !== 'your_supabase_url_here' && supabaseKey !== 'your_supabase_key_here') {
+if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('https://') && supabaseKey.startsWith('eyJ')) {
   try {
     supabase = createClient(supabaseUrl, supabaseKey);
     console.log('✅ Supabase client created successfully');

@@ -7,7 +7,7 @@ async function testConnection() {
     // Test basic connection
     const { data, error } = await supabase
       .from('users')
-      .select('count')
+      .select('*')
       .limit(1);
     
     if (error) {
@@ -19,9 +19,14 @@ async function testConnection() {
     } else {
       console.log('✅ Database connection successful!');
       console.log('✅ Users table is accessible');
+      console.log('📊 Found', data ? data.length : 0, 'users in the database');
     }
   } catch (err) {
     console.error('❌ Connection test failed:', err.message);
+    console.log('\nThis might be because:');
+    console.log('1. Environment variables are not loaded properly');
+    console.log('2. Mock client is being used instead of real Supabase client');
+    console.log('3. Check if .env file is in the correct location');
   }
 }
 
