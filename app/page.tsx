@@ -11,49 +11,80 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BookOpen, Users, Shield, Clock, Award, BarChart3 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { apiService } from "@/lib/api"
 
 export default function HomePage() {
   const [loginData, setLoginData] = useState({ email: "", password: "", role: "" })
   const [signupData, setSignupData] = useState({ name: "", email: "", password: "", role: "" })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock authentication - in real app, this would call an API
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        name: loginData.email.split("@")[0],
-        email: loginData.email,
-        role: loginData.role,
-      }),
-    )
+    setLoading(true)
+    setError("")
 
-    if (loginData.role === "admin") {
-      router.push("/admin/dashboard")
-    } else {
-      router.push("/student/dashboard")
+    try {
+      const response = await apiService.login({
+        email: loginData.email,
+        password: loginData.password,
+      })
+
+      // Store token and user data
+      localStorage.setItem("token", response.token)
+      localStorage.setItem("user", JSON.stringify(response.user))
+
+      if (response.user.role === "admin") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/student/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock registration - in real app, this would call an API
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
+    setLoading(true)
+    setError("")
+
+    try {
+      await apiService.signup({
         name: signupData.name,
         email: signupData.email,
+        password: signupData.password,
         role: signupData.role,
-      }),
-    )
+      })
 
-    if (signupData.role === "admin") {
-      router.push("/admin/dashboard")
-    } else {
-      router.push("/student/dashboard")
+      // After successful signup, log in the user
+      const loginResponse = await apiService.login({
+        email: signupData.email,
+        password: signupData.password,
+      })
+
+      // Store token and user data
+      localStorage.setItem("token", loginResponse.token)
+      localStorage.setItem("user", JSON.stringify(loginResponse.user))
+
+      if (loginResponse.user.role === "admin") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/student/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message || "Signup failed. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
+
+  // Check if signup form is complete
+  const isSignupComplete = signupData.name && signupData.email && signupData.password && signupData.role
+  const isLoginComplete = loginData.email && loginData.password && loginData.role
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -132,6 +163,12 @@ export default function HomePage() {
                 <CardDescription>Sign in to your account or create a new one</CardDescription>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-red-600 text-sm">{error}</p>
+                  </div>
+                )}
+                
                 <Tabs defaultValue="login" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="login">Login</TabsTrigger>
@@ -166,7 +203,7 @@ export default function HomePage() {
                         <Label htmlFor="login-role">Role</Label>
                         <Select
                           value={loginData.role}
-                          onValueChange={(value) => setLoginData({ ...loginData, role: value })}
+                          onValueChange={(value: string) => setLoginData({ ...loginData, role: value })}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select your role" />
@@ -177,8 +214,8 @@ export default function HomePage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <Button type="submit" className="w-full" disabled={!loginData.role}>
-                        Sign In
+                      <Button type="submit" className="w-full" disabled={!isLoginComplete || loading}>
+                        {loading ? "Signing In..." : "Sign In"}
                       </Button>
                     </form>
                   </TabsContent>
@@ -222,7 +259,7 @@ export default function HomePage() {
                         <Label htmlFor="signup-role">Role</Label>
                         <Select
                           value={signupData.role}
-                          onValueChange={(value) => setSignupData({ ...signupData, role: value })}
+                          onValueChange={(value: string) => setSignupData({ ...signupData, role: value })}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select your role" />
@@ -233,8 +270,8 @@ export default function HomePage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <Button type="submit" className="w-full" disabled={!signupData.role}>
-                        Create Account
+                      <Button type="submit" className="w-full" disabled={!isSignupComplete || loading}>
+                        {loading ? "Creating Account..." : "Create Account"}
                       </Button>
                     </form>
                   </TabsContent>
