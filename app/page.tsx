@@ -13,9 +13,23 @@ import { BookOpen, Users, Shield, Clock, Award, BarChart3 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/lib/api"
 
+type SignupData = {
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+  // role is not needed in the form, will be set to 'student' by default
+};
+
+type LoginData = {
+  username: string;
+  password: string;
+  role: string;
+};
+
 export default function HomePage() {
-  const [loginData, setLoginData] = useState({ email: "", password: "", role: "" })
-  const [signupData, setSignupData] = useState({ name: "", email: "", password: "", role: "" })
+  const [loginData, setLoginData] = useState<LoginData>({ username: "", password: "", role: "" })
+  const [signupData, setSignupData] = useState<SignupData>({ name: "", username: "", email: "", password: "" })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
@@ -27,8 +41,9 @@ export default function HomePage() {
 
     try {
       const response = await apiService.login({
-        email: loginData.email,
+        username: loginData.username,
         password: loginData.password,
+        role: loginData.role,
       })
 
       // Store token and user data
@@ -53,17 +68,23 @@ export default function HomePage() {
     setError("")
 
     try {
+      // Split full name into firstName and lastName
+      const [firstName, ...rest] = signupData.name.trim().split(" ")
+      const lastName = rest.join(" ") || ""
       await apiService.signup({
-        name: signupData.name,
+        username: signupData.username,
+        firstName,
+        lastName,
         email: signupData.email,
         password: signupData.password,
-        role: signupData.role,
+        role: "student", // Always student
       })
 
       // After successful signup, log in the user
       const loginResponse = await apiService.login({
-        email: signupData.email,
+        username: signupData.username,
         password: signupData.password,
+        role: "student",
       })
 
       // Store token and user data
@@ -83,8 +104,8 @@ export default function HomePage() {
   }
 
   // Check if signup form is complete
-  const isSignupComplete = signupData.name && signupData.email && signupData.password && signupData.role
-  const isLoginComplete = loginData.email && loginData.password && loginData.role
+  const isSignupComplete = signupData.name && signupData.username && signupData.email && signupData.password
+  const isLoginComplete = loginData.username && loginData.password && loginData.role
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -178,13 +199,13 @@ export default function HomePage() {
                   <TabsContent value="login" className="space-y-4">
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="login-email">Email</Label>
+                        <Label htmlFor="login-username">Username</Label>
                         <Input
-                          id="login-email"
-                          type="email"
-                          placeholder="Enter your email"
-                          value={loginData.email}
-                          onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                          id="login-username"
+                          type="text"
+                          placeholder="Enter your username"
+                          value={loginData.username}
+                          onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                           required
                         />
                       </div>
@@ -223,6 +244,17 @@ export default function HomePage() {
                   <TabsContent value="signup" className="space-y-4">
                     <form onSubmit={handleSignup} className="space-y-4">
                       <div className="space-y-2">
+                        <Label htmlFor="signup-username">Username</Label>
+                        <Input
+                          id="signup-username"
+                          type="text"
+                          placeholder="Enter your username"
+                          value={signupData.username}
+                          onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="signup-name">Full Name</Label>
                         <Input
                           id="signup-name"
@@ -254,21 +286,6 @@ export default function HomePage() {
                           onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                           required
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-role">Role</Label>
-                        <Select
-                          value={signupData.role}
-                          onValueChange={(value: string) => setSignupData({ ...signupData, role: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                       <Button type="submit" className="w-full" disabled={!isSignupComplete || loading}>
                         {loading ? "Creating Account..." : "Create Account"}
