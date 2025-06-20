@@ -169,6 +169,28 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // Forgot password (OTP) flow
+  async triggerPasswordResetByEmail(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/reset-password/request', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async verifyPasswordResetOtp(email: string, code: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/reset-password/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, code, newPassword }),
+    });
+  }
 }
 
 export const apiService = new ApiService(); 

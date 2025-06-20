@@ -38,6 +38,15 @@ export default function HomePage() {
   const [otpSent, setOtpSent] = useState(false)
   const [loginEmail, setLoginEmail] = useState("")
 
+  // Add state for forgot password flow
+  const [showForgot, setShowForgot] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotOtp, setForgotOtp] = useState("")
+  const [forgotStep, setForgotStep] = useState<"email"|"otp"|"reset">("email")
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotError, setForgotError] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -71,17 +80,11 @@ export default function HomePage() {
     setLoading(true)
     setError("")
     try {
-      // Split full name into firstName and lastName
-      const [firstName, ...rest] = signupData.name.trim().split(" ")
-      const lastName = rest.join(" ") || ""
       await apiService.signup({
+        name: signupData.name,
         email: signupData.email,
-        firstName,
-        lastName,
         password: signupData.password,
-        role: "student",
       })
-      // Send verification OTP
       await apiService.sendVerificationOTP(signupData.email)
       setVerifyEmail(signupData.email)
       setShowVerify(true)
@@ -148,6 +151,52 @@ export default function HomePage() {
       setError(err.message || "OTP verification failed. Please try again.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Forgot password handlers
+  const handleForgotSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotLoading(true)
+    setForgotError("")
+    try {
+      await apiService.triggerPasswordResetByEmail(forgotEmail)
+      setForgotStep("otp")
+    } catch (err: any) {
+      setForgotError(err.message || "Failed to send OTP.")
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+  const handleForgotVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotLoading(true)
+    setForgotError("")
+    try {
+      await apiService.verifyPasswordResetOtp(forgotEmail, forgotOtp)
+      setForgotStep("reset")
+    } catch (err: any) {
+      setForgotError(err.message || "Invalid OTP.")
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+  const handleForgotResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotLoading(true)
+    setForgotError("")
+    try {
+      await apiService.resetPassword(forgotEmail, forgotOtp, newPassword)
+      setShowForgot(false)
+      setForgotStep("email")
+      setForgotEmail("")
+      setForgotOtp("")
+      setNewPassword("")
+      alert("Password reset successful! You can now log in.")
+    } catch (err: any) {
+      setForgotError(err.message || "Failed to reset password.")
+    } finally {
+      setForgotLoading(false)
     }
   }
 
@@ -245,7 +294,7 @@ export default function HomePage() {
                   </TabsList>
 
                   <TabsContent value="login" className="space-y-4">
-                    {!otpSent && !showVerify && (
+                    {!otpSent && !showVerify && !showForgot && (
                       <form onSubmit={handleSendLoginOtp} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="login-email">Email</Label>
@@ -261,7 +310,80 @@ export default function HomePage() {
                         <Button type="submit" className="w-full" disabled={!loginEmail || loading}>
                           {loading ? "Sending OTP..." : "Send OTP"}
                         </Button>
+                        <div className="text-right">
+                          <button type="button" className="text-xs text-blue-600 underline" onClick={() => setShowForgot(true)}>
+                            Forgot Password?
+                          </button>
+                        </div>
                       </form>
+                    )}
+                    {showForgot && (
+                      <div className="space-y-4">
+                        {forgotStep === "email" && (
+                          <form onSubmit={handleForgotSendOtp} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="forgot-email">Email</Label>
+                              <Input
+                                id="forgot-email"
+                                type="email"
+                                placeholder="Enter your email"
+                                value={forgotEmail}
+                                onChange={e => setForgotEmail(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <Button type="submit" className="w-full" disabled={!forgotEmail || forgotLoading}>
+                              {forgotLoading ? "Sending OTP..." : "Send OTP"}
+                            </Button>
+                            <div className="text-right">
+                              <button type="button" className="text-xs text-gray-600 underline" onClick={() => setShowForgot(false)}>
+                                Back to Login
+                              </button>
+                            </div>
+                            {forgotError && <div className="text-red-600 text-xs">{forgotError}</div>}
+                          </form>
+                        )}
+                        {forgotStep === "otp" && (
+                          <form onSubmit={handleForgotVerifyOtp} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="forgot-otp">Enter OTP</Label>
+                              <Input
+                                id="forgot-otp"
+                                type="text"
+                                placeholder="Enter the OTP sent to your email"
+                                value={forgotOtp}
+                                onChange={e => setForgotOtp(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <Button type="submit" className="w-full" disabled={!forgotOtp || forgotLoading}>
+                              {forgotLoading ? "Verifying..." : "Verify OTP"}
+                            </Button>
+                            <div className="text-right">
+                              <button type="button" className="text-xs text-gray-600 underline" onClick={() => setForgotStep("email")}>Back</button>
+                            </div>
+                            {forgotError && <div className="text-red-600 text-xs">{forgotError}</div>}
+                          </form>
+                        )}
+                        {forgotStep === "reset" && (
+                          <form onSubmit={handleForgotResetPassword} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="forgot-new-password">New Password</Label>
+                              <Input
+                                id="forgot-new-password"
+                                type="password"
+                                placeholder="Enter new password"
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <Button type="submit" className="w-full" disabled={!newPassword || forgotLoading}>
+                              {forgotLoading ? "Resetting..." : "Reset Password"}
+                            </Button>
+                          </form>
+                        )}
+                      </div>
                     )}
                     {showVerify && verifyStep === "login" && (
                       <form onSubmit={handleVerifyLoginOtp} className="space-y-4">
@@ -286,6 +408,17 @@ export default function HomePage() {
                   <TabsContent value="signup" className="space-y-4">
                     {!showVerify && (
                       <form onSubmit={handleSignup} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-name">Full Name</Label>
+                          <Input
+                            id="signup-name"
+                            type="text"
+                            placeholder="Enter your full name"
+                            value={signupData.name}
+                            onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
+                            required
+                          />
+                        </div>
                         <div className="space-y-2">
                           <Label htmlFor="signup-email">Email</Label>
                           <Input
