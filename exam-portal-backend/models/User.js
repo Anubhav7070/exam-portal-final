@@ -47,6 +47,22 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: null
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationCode: {
+    type: String
+  },
+  emailVerificationExpires: {
+    type: Date
+  },
+  loginOTP: {
+    type: String
+  },
+  loginOTPExpires: {
+    type: Date
   }
 }, {
   timestamps: true

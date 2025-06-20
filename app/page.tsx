@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,24 +15,28 @@ import { apiService } from "@/lib/api"
 
 type SignupData = {
   name: string;
-  username: string;
   email: string;
   password: string;
-  // role is not needed in the form, will be set to 'student' by default
 };
 
 type LoginData = {
-  username: string;
-  password: string;
-  role: string;
+  email: string;
 };
 
 export default function HomePage() {
-  const [loginData, setLoginData] = useState<LoginData>({ username: "", password: "", role: "" })
-  const [signupData, setSignupData] = useState<SignupData>({ name: "", username: "", email: "", password: "" })
+  const [loginData, setLoginData] = useState<LoginData>({ email: "" })
+  const [signupData, setSignupData] = useState<SignupData>({ name: "", email: "", password: "" })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+
+  // Add new state for OTP flows
+  const [showVerify, setShowVerify] = useState(false)
+  const [verifyEmail, setVerifyEmail] = useState("")
+  const [verifyStep, setVerifyStep] = useState<"none"|"signup"|"login">("none")
+  const [otp, setOtp] = useState("")
+  const [otpSent, setOtpSent] = useState(false)
+  const [loginEmail, setLoginEmail] = useState("")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,7 +45,7 @@ export default function HomePage() {
 
     try {
       const response = await apiService.login({
-        username: loginData.username,
+        email: loginData.email,
         password: loginData.password,
         role: loginData.role,
       })
@@ -66,36 +70,22 @@ export default function HomePage() {
     e.preventDefault()
     setLoading(true)
     setError("")
-
     try {
       // Split full name into firstName and lastName
       const [firstName, ...rest] = signupData.name.trim().split(" ")
       const lastName = rest.join(" ") || ""
       await apiService.signup({
-        username: signupData.username,
+        email: signupData.email,
         firstName,
         lastName,
-        email: signupData.email,
-        password: signupData.password,
-        role: "student", // Always student
-      })
-
-      // After successful signup, log in the user
-      const loginResponse = await apiService.login({
-        username: signupData.username,
         password: signupData.password,
         role: "student",
       })
-
-      // Store token and user data
-      localStorage.setItem("token", loginResponse.token)
-      localStorage.setItem("user", JSON.stringify(loginResponse.user))
-
-      if (loginResponse.user.role === "admin") {
-        router.push("/admin/dashboard")
-      } else {
-        router.push("/student/dashboard")
-      }
+      // Send verification OTP
+      await apiService.sendVerificationOTP(signupData.email)
+      setVerifyEmail(signupData.email)
+      setShowVerify(true)
+      setVerifyStep("signup")
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.")
     } finally {
@@ -103,9 +93,67 @@ export default function HomePage() {
     }
   }
 
+  const handleVerifyEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    try {
+      await apiService.verifyEmail(verifyEmail, otp)
+      setShowVerify(false)
+      setVerifyStep("none")
+      setOtp("")
+      alert("Email verified! You can now log in.")
+    } catch (err: any) {
+      setError(err.message || "Verification failed. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Login flow
+  const handleSendLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    try {
+      await apiService.sendLoginOTP(loginEmail)
+      setOtpSent(true)
+      setVerifyEmail(loginEmail)
+      setShowVerify(true)
+      setVerifyStep("login")
+    } catch (err: any) {
+      setError(err.message || "Failed to send OTP. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    try {
+      const response = await apiService.verifyLoginOTP(verifyEmail, otp)
+      localStorage.setItem("token", response.token)
+      localStorage.setItem("user", JSON.stringify(response.user))
+      setShowVerify(false)
+      setVerifyStep("none")
+      setOtp("")
+      if (response.user.role === "admin") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/student/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message || "OTP verification failed. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Check if signup form is complete
-  const isSignupComplete = signupData.name && signupData.username && signupData.email && signupData.password
-  const isLoginComplete = loginData.username && loginData.password && loginData.role
+  const isSignupComplete = signupData.name && signupData.email && signupData.password
+  const isLoginComplete = loginData.email && loginData.password && loginData.role
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -115,7 +163,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">ExamPortal</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Examinia</h1>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-2 text-gray-600">
@@ -197,100 +245,92 @@ export default function HomePage() {
                   </TabsList>
 
                   <TabsContent value="login" className="space-y-4">
-                    <form onSubmit={handleLogin} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="login-username">Username</Label>
-                        <Input
-                          id="login-username"
-                          type="text"
-                          placeholder="Enter your username"
-                          value={loginData.username}
-                          onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="login-password">Password</Label>
-                        <Input
-                          id="login-password"
-                          type="password"
-                          placeholder="Enter your password"
-                          value={loginData.password}
-                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="login-role">Role</Label>
-                        <Select
-                          value={loginData.role}
-                          onValueChange={(value: string) => setLoginData({ ...loginData, role: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button type="submit" className="w-full" disabled={!isLoginComplete || loading}>
-                        {loading ? "Signing In..." : "Sign In"}
-                      </Button>
-                    </form>
+                    {!otpSent && !showVerify && (
+                      <form onSubmit={handleSendLoginOtp} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="login-email">Email</Label>
+                          <Input
+                            id="login-email"
+                            type="email"
+                            placeholder="Enter your email"
+                            value={loginEmail}
+                            onChange={(e) => setLoginEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={!loginEmail || loading}>
+                          {loading ? "Sending OTP..." : "Send OTP"}
+                        </Button>
+                      </form>
+                    )}
+                    {showVerify && verifyStep === "login" && (
+                      <form onSubmit={handleVerifyLoginOtp} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="login-otp">Enter OTP</Label>
+                          <Input
+                            id="login-otp"
+                            type="text"
+                            placeholder="Enter the OTP sent to your email"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={!otp || loading}>
+                          {loading ? "Verifying..." : "Verify & Login"}
+                        </Button>
+                      </form>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="signup" className="space-y-4">
-                    <form onSubmit={handleSignup} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-username">Username</Label>
-                        <Input
-                          id="signup-username"
-                          type="text"
-                          placeholder="Enter your username"
-                          value={signupData.username}
-                          onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-name">Full Name</Label>
-                        <Input
-                          id="signup-name"
-                          type="text"
-                          placeholder="Enter your full name"
-                          value={signupData.name}
-                          onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-email">Email</Label>
-                        <Input
-                          id="signup-email"
-                          type="email"
-                          placeholder="Enter your email"
-                          value={signupData.email}
-                          onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-password">Password</Label>
-                        <Input
-                          id="signup-password"
-                          type="password"
-                          placeholder="Create a password"
-                          value={signupData.password}
-                          onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <Button type="submit" className="w-full" disabled={!isSignupComplete || loading}>
-                        {loading ? "Creating Account..." : "Create Account"}
-                      </Button>
-                    </form>
+                    {!showVerify && (
+                      <form onSubmit={handleSignup} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-email">Email</Label>
+                          <Input
+                            id="signup-email"
+                            type="email"
+                            placeholder="Enter your email"
+                            value={signupData.email}
+                            onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-password">Password</Label>
+                          <Input
+                            id="signup-password"
+                            type="password"
+                            placeholder="Create a password"
+                            value={signupData.password}
+                            onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={!isSignupComplete || loading}>
+                          {loading ? "Creating Account..." : "Create Account"}
+                        </Button>
+                      </form>
+                    )}
+                    {showVerify && verifyStep === "signup" && (
+                      <form onSubmit={handleVerifyEmail} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-otp">Enter OTP</Label>
+                          <Input
+                            id="signup-otp"
+                            type="text"
+                            placeholder="Enter the OTP sent to your email"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={!otp || loading}>
+                          {loading ? "Verifying..." : "Verify Email"}
+                        </Button>
+                      </form>
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>

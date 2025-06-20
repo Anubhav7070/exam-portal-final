@@ -1,6 +1,6 @@
-# MongoDB Setup Guide for Exam Portal
+# MongoDB Setup Guide for Examinia
 
-This guide will help you set up MongoDB for the Exam Portal backend.
+This guide will help you set up MongoDB for the Examinia backend.
 
 ## Prerequisites
 
@@ -91,7 +91,7 @@ npm run seed
 ```
 
 This will create:
-- 1 Admin user (admin@examportal.com / admin123)
+- 1 Admin user (admin@examinia.com / admin123)
 - 3 Student users (john@example.com, jane@example.com, mike@example.com / password123)
 - 2 Sample exams (JavaScript Fundamentals, React Basics)
 - 2 Sample results

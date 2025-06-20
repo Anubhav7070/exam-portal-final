@@ -1,4 +1,4 @@
-# Exam Portal Backend
+# Examinia Backend
 
 A comprehensive backend API for an online examination system built with Node.js, Express, and MongoDB.
 
@@ -194,83 +194,5 @@ NODE_ENV=development
 The seed script creates:
 
 **Users:**
-- Admin: `admin@examportal.com` / `admin123`
-- Students: `john@example.com`, `jane@example.com`, `mike@example.com` / `password123`
-
-**Exams:**
-- JavaScript Fundamentals (30 minutes, 3 questions)
-- React Basics (45 minutes, 4 questions)
-
-## Security Features
-
-- **Password Hashing**: All passwords are hashed using bcrypt
-- **JWT Authentication**: Secure token-based authentication
-- **Input Validation**: All inputs are validated and sanitized
-- **Role-based Access**: Admin and student role separation
-- **Environment Variables**: Sensitive data stored in environment variables
-
-## Development
-
-### Project Structure
-```
-exam-portal-backend/
-├── controllers/     # Route controllers
-├── db/             # Database configuration
-├── middleware/     # Custom middleware
-├── models/         # Mongoose models
-├── routes/         # API routes
-├── seed/           # Database seeding
-├── app.js          # Main application file
-└── package.json    # Dependencies and scripts
-```
-
-### Adding New Features
-
-1. **Create Model**: Add new Mongoose schema in `models/`
-2. **Create Controller**: Add business logic in `controllers/`
-3. **Create Routes**: Define API endpoints in `routes/`
-4. **Add Middleware**: Create custom middleware if needed
-5. **Update Validation**: Add input validation rules
-
-## Deployment
-
-### Production Checklist
-
-- [ ] Set `NODE_ENV=production`
-- [ ] Use strong JWT secret
-- [ ] Enable MongoDB authentication
-- [ ] Set up HTTPS
-- [ ] Configure CORS properly
-- [ ] Set up monitoring and logging
-- [ ] Use environment-specific configuration
-
-### Docker Deployment
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 5000
-CMD ["npm", "start"]
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the ISC License.
-
-## Support
-
-For support and questions:
-1. Check the [MongoDB Setup Guide](MONGODB_SETUP.md)
-2. Review the troubleshooting section
-3. Check MongoDB and Node.js documentation 
+- Admin: `admin@examinia.com` / `admin123`
+- Students: `

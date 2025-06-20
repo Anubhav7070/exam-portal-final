@@ -20,7 +20,7 @@ const seedData = async () => {
     // Create admin user
     const adminUser = new User({
       username: 'admin',
-      email: 'admin@examportal.com',
+      email: 'admin@examinia.com',
       password: 'admin123',
       role: 'admin',
       firstName: 'Admin',
@@ -203,7 +203,7 @@ const seedData = async () => {
     
     console.log('\n🎉 Database seeded successfully!');
     console.log('\n📊 Sample Data Created:');
-    console.log('- 1 Admin user (admin@examportal.com / admin123)');
+    console.log('- 1 Admin user (admin@examinia.com / admin123)');
     console.log('- 3 Student users (john@example.com, jane@example.com, mike@example.com / password123)');
     console.log('- 2 Sample exams (JavaScript Fundamentals, React Basics)');
     console.log('- 2 Sample results');

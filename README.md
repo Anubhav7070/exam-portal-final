@@ -1,4 +1,4 @@
-# Exam Portal
+# Examinia
 
 An advanced online examination platform built with Next.js for the frontend and a Node.js/Express backend, featuring role-based access control for administrators and students. The backend is powered by Supabase for database and authentication services.
 

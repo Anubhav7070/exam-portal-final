@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, getProfile, updateProfile } = require('../controllers/authController');
-const { authenticateToken } = require('../middleware/auth');
+const { signup, login, getProfile, updateProfile, sendVerificationOTP, verifyEmail, sendLoginOTP, verifyLoginOTP, deleteUser, getAllUsers } = require('../controllers/authController');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { body } = require('express-validator');
 
 // POST /auth/signup
@@ -67,5 +67,35 @@ router.put('/profile', [
     .withMessage('Valid email is required')
     .normalizeEmail()
 ], updateProfile);
+
+// POST /auth/send-verification
+router.post('/send-verification', sendVerificationOTP);
+
+// POST /auth/verify-email
+router.post('/verify-email', verifyEmail);
+
+// POST /auth/login-otp
+router.post('/login-otp', sendLoginOTP);
+
+// POST /auth/verify-login-otp
+router.post('/verify-login-otp', verifyLoginOTP);
+
+// DELETE /auth/user/:id (admin only)
+router.delete('/user/:id', authenticateToken, requireAdmin, deleteUser);
+
+// GET /auth/users (admin only)
+router.get('/users', authenticateToken, requireAdmin, getAllUsers);
+
+// PATCH /auth/user/:id (admin only)
+router.patch('/user/:id', authenticateToken, requireAdmin, require('../controllers/authController').updateUser);
+
+// PATCH /auth/user/:id/active (admin only)
+router.patch('/user/:id/active', authenticateToken, requireAdmin, require('../controllers/authController').toggleUserActive);
+
+// PATCH /auth/user/:id/role (admin only)
+router.patch('/user/:id/role', authenticateToken, requireAdmin, require('../controllers/authController').changeUserRole);
+
+// POST /auth/user/:id/reset-password (admin only)
+router.post('/user/:id/reset-password', authenticateToken, requireAdmin, require('../controllers/authController').triggerPasswordReset);
 
 module.exports = router; 

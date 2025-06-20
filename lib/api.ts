@@ -105,6 +105,70 @@ class ApiService {
   async getUserResults(userId: string): Promise<any[]> {
     return this.request<any[]>(`/results/${userId}`);
   }
+
+  async sendVerificationOTP(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/send-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async verifyEmail(email: string, code: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  }
+
+  async sendLoginOTP(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/login-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async verifyLoginOTP(email: string, code: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/verify-login-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  }
+
+  async deleteUser(userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/auth/user/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return this.request<User[]>('/auth/users');
+  }
+
+  async updateUser(userId: string, data: Partial<User>): Promise<{ message: string; user: User }> {
+    return this.request<{ message: string; user: User }>(`/auth/user/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async toggleUserActive(userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/auth/user/${userId}/active`, {
+      method: 'PATCH',
+    });
+  }
+
+  async changeUserRole(userId: string, role: string): Promise<{ message: string; user: User }> {
+    return this.request<{ message: string; user: User }>(`/auth/user/${userId}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async triggerPasswordReset(userId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/auth/user/${userId}/reset-password`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const apiService = new ApiService(); 

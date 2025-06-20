@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully migrated the Exam Portal backend from Supabase to MongoDB with Mongoose ODM.
+Successfully migrated the Examinia backend from Supabase to MongoDB with Mongoose ODM.
 
 ## Changes Made
 
@@ -149,7 +149,7 @@ NODE_ENV=development
 ## Sample Data
 
 The seed script creates:
-- **1 Admin user**: `admin@examportal.com` / `admin123`
+- **1 Admin user**: `admin@examinia.com` / `admin123`
 - **3 Student users**: `john@example.com`, `jane@example.com`, `mike@example.com` / `password123`
 - **2 Sample exams**: JavaScript Fundamentals, React Basics
 - **2 Sample results**: Completed exam attempts

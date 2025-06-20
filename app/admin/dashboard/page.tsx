@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Users, BookOpen, Calendar, BarChart3, Plus, Settings, LogOut, FileText, Clock, Award } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { apiService } from '@/lib/api'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface Student {
   id: string
@@ -28,11 +32,25 @@ interface Exam {
   studentsEnrolled: number
 }
 
+interface User {
+  id: string
+  email: string
+  role: string
+  firstName?: string
+  lastName?: string
+  isEmailVerified?: boolean
+  isActive?: boolean
+}
+
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null)
   const [students, setStudents] = useState<Student[]>([])
   const [exams, setExams] = useState<Exam[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const router = useRouter()
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [editForm, setEditForm] = useState<{ firstName?: string; lastName?: string; email?: string; role?: string }>({})
+  const [editLoading, setEditLoading] = useState(false)
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -109,6 +127,17 @@ export default function AdminDashboard() {
         studentsEnrolled: 0,
       },
     ])
+
+    // Fetch users from backend
+    const fetchUsers = async () => {
+      try {
+        const users = await apiService.getAllUsers()
+        setUsers(users)
+      } catch (err) {
+        // handle error
+      }
+    }
+    fetchUsers()
   }, [router])
 
   const handleLogout = () => {
@@ -121,6 +150,72 @@ export default function AdminDashboard() {
   const publishedExams = exams.filter((exam) => exam.status === "published").length
   const averageScore =
     students.length > 0 ? students.reduce((sum, student) => sum + student.averageScore, 0) / students.length : 0
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return
+    try {
+      await apiService.deleteUser(userId)
+      setUsers(users.filter(u => u.id !== userId))
+    } catch (err) {
+      alert('Failed to delete user')
+    }
+  }
+
+  const handleEditUser = (user: User) => {
+    setEditUser(user)
+    setEditForm({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      role: user.role || 'student',
+    })
+  }
+
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm({ ...editForm, [field]: value })
+  }
+
+  const handleEditFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editUser) return
+    setEditLoading(true)
+    try {
+      const { user: updated } = await apiService.updateUser(editUser.id, editForm)
+      setUsers(users.map(u => u.id === updated.id ? updated : u))
+      setEditUser(null)
+    } catch (err) {
+      alert('Failed to update user')
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleToggleActive = async (userId: string) => {
+    try {
+      await apiService.toggleUserActive(userId)
+      setUsers(users => users.map(u => u.id === userId ? { ...u, isActive: !u.isActive } : u))
+    } catch (err) {
+      alert('Failed to toggle user active status')
+    }
+  }
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+    try {
+      const { user: updated } = await apiService.changeUserRole(userId, newRole)
+      setUsers(users.map(u => u.id === updated.id ? updated : u))
+    } catch (err) {
+      alert('Failed to change user role')
+    }
+  }
+
+  const handleTriggerPasswordReset = async (userId: string) => {
+    try {
+      await apiService.triggerPasswordReset(userId)
+      alert('Password reset email sent')
+    } catch (err) {
+      alert('Failed to send password reset email')
+    }
+  }
 
   if (!user) return null
 
@@ -354,7 +449,88 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* User Management Table */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+            <CardDescription>Manage all users (students and admins)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Verified</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id}>
+                    <td className="px-4 py-2">{u.email}</td>
+                    <td className="px-4 py-2">{u.role}</td>
+                    <td className="px-4 py-2">{u.isEmailVerified ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-2">{u.isActive ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-2 flex gap-2">
+                      {user && user.id !== u.id && (
+                        <>
+                          <Button size="sm" onClick={() => handleEditUser(u)}>Edit</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleToggleActive(u.id)}>{u.isActive ? 'Deactivate' : 'Activate'}</Button>
+                          <Select value={u.role} onValueChange={val => handleChangeRole(u.id, val)}>
+                            <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="student">Student</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="sm" variant="outline" onClick={() => handleTriggerPasswordReset(u.id)}>Reset Password</Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(u.id)}>Delete</Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Edit User Modal */}
+      <Dialog open={!!editUser} onOpenChange={open => !open && setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditFormSubmit} className="space-y-4">
+            <Input
+              placeholder="First Name"
+              value={editForm.firstName || ''}
+              onChange={e => handleEditFormChange('firstName', e.target.value)}
+              required
+            />
+            <Input
+              placeholder="Last Name"
+              value={editForm.lastName || ''}
+              onChange={e => handleEditFormChange('lastName', e.target.value)}
+              required
+            />
+            <Input
+              placeholder="Email"
+              type="email"
+              value={editForm.email || ''}
+              onChange={e => handleEditFormChange('email', e.target.value)}
+              required
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 Setting up MongoDB for Exam Portal');
+console.log('🚀 Setting up MongoDB for Examinia');
 console.log('=====================================');
 
 // Check if .env file exists
