@@ -89,6 +89,13 @@ FOR SELECT USING (auth.uid()::text = id::text);
 CREATE POLICY "Anyone can create users" ON users 
 FOR INSERT WITH CHECK (true);
 
+-- Drop policies for other tables
+DROP POLICY IF EXISTS "Students can read exams" ON exams;
+DROP POLICY IF EXISTS "Admins can manage exams" ON exams;
+DROP POLICY IF EXISTS "Users can read own submissions" ON submissions;
+DROP POLICY IF EXISTS "Users can create own submissions" ON submissions;
+DROP POLICY IF EXISTS "Users can read own results" ON results;
+
 -- Create policies for other tables
 -- Students can read exams
 CREATE POLICY "Students can read exams" ON exams FOR SELECT USING (true);
