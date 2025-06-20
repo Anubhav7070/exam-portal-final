@@ -397,4 +397,14 @@ exports.triggerPasswordReset = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// Admin: Get all students
+exports.getAllStudents = async (req, res, next) => {
+  try {
+    const students = await User.find({ role: 'student' }, '-password');
+    res.json(students);
+  } catch (err) {
+    next(err);
+  }
 }; 

@@ -12,13 +12,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-interface Student {
+interface User {
   id: string
-  name: string
   email: string
-  totalExams: number
-  averageScore: number
-  lastActive: string
+  role: string
+  firstName?: string
+  lastName?: string
+  isEmailVerified?: boolean
+  isActive?: boolean
 }
 
 interface Exam {
@@ -32,19 +33,9 @@ interface Exam {
   studentsEnrolled: number
 }
 
-interface User {
-  id: string
-  email: string
-  role: string
-  firstName?: string
-  lastName?: string
-  isEmailVerified?: boolean
-  isActive?: boolean
-}
-
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null)
-  const [students, setStudents] = useState<Student[]>([])
+  const [students, setStudents] = useState<User[]>([])
   const [exams, setExams] = useState<Exam[]>([])
   const [users, setUsers] = useState<User[]>([])
   const router = useRouter()
@@ -65,86 +56,28 @@ export default function AdminDashboard() {
       router.push("/")
       return
     }
-
     const parsedUser = JSON.parse(userData)
     if (parsedUser.role !== "admin") {
       router.push("/")
       return
     }
-
     setUser(parsedUser)
-
-    // Mock data
-    setStudents([
-      {
-        id: "1",
-        name: "John Doe",
-        email: "john@example.com",
-        totalExams: 5,
-        averageScore: 85,
-        lastActive: "2024-01-10",
-      },
-      {
-        id: "2",
-        name: "Jane Smith",
-        email: "jane@example.com",
-        totalExams: 3,
-        averageScore: 92,
-        lastActive: "2024-01-09",
-      },
-      {
-        id: "3",
-        name: "Mike Johnson",
-        email: "mike@example.com",
-        totalExams: 7,
-        averageScore: 78,
-        lastActive: "2024-01-11",
-      },
-    ])
-
-    setExams([
-      {
-        id: "1",
-        title: "Mathematics Final Exam",
-        subject: "Mathematics",
-        duration: 120,
-        totalQuestions: 50,
-        scheduledDate: "2024-01-15T10:00:00",
-        status: "published",
-        studentsEnrolled: 25,
-      },
-      {
-        id: "2",
-        title: "Physics Quiz",
-        subject: "Physics",
-        duration: 60,
-        totalQuestions: 25,
-        scheduledDate: "2024-01-10T14:00:00",
-        status: "completed",
-        studentsEnrolled: 18,
-      },
-      {
-        id: "3",
-        title: "Chemistry Test",
-        subject: "Chemistry",
-        duration: 90,
-        totalQuestions: 40,
-        scheduledDate: "2024-01-12T09:00:00",
-        status: "draft",
-        studentsEnrolled: 0,
-      },
-    ])
-
-    // Fetch users from backend
-    const fetchUsers = async () => {
+    // Fetch students and exams from backend
+    const fetchData = async () => {
       try {
-        const users = await apiService.getAllUsers()
+        const [students, exams, users] = await Promise.all([
+          apiService.getAllStudents(),
+          apiService.getExams(),
+          apiService.getAllUsers(),
+        ])
+        setStudents(students)
+        setExams(exams)
         setUsers(users)
       } catch (err) {
         // handle error
       }
     }
-    fetchUsers()
+    fetchData()
   }, [router])
 
   const handleLogout = () => {
@@ -281,6 +214,15 @@ export default function AdminDashboard() {
       setExams(exams.filter(ex => ex.id !== id))
     } catch (err) {
       alert('Failed to delete exam')
+    }
+  }
+
+  const handlePublishExam = async (id: string) => {
+    try {
+      const updated = await apiService.updateExam(id, { status: 'published' })
+      setExams(exams.map(ex => ex.id === updated.id ? updated : ex))
+    } catch (err) {
+      alert('Failed to publish exam')
     }
   }
 
@@ -435,7 +377,9 @@ export default function AdminDashboard() {
                         <Button variant="outline" size="sm">
                           View Results
                         </Button>
-                        {exam.status === "draft" && <Button size="sm">Publish</Button>}
+                        {exam.status !== 'published' && (
+                          <Button size="sm" variant="outline" onClick={() => handlePublishExam(exam.id)}>Publish</Button>
+                        )}
                       </div>
                     </div>
                   ))}

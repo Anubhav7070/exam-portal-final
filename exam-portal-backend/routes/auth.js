@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, getProfile, updateProfile, sendVerificationOTP, verifyEmail, sendLoginOTP, verifyLoginOTP, deleteUser, getAllUsers } = require('../controllers/authController');
+const { signup, login, getProfile, updateProfile, sendVerificationOTP, verifyEmail, sendLoginOTP, verifyLoginOTP, deleteUser, getAllUsers, getAllStudents } = require('../controllers/authController');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { body } = require('express-validator');
 
@@ -97,5 +97,8 @@ router.patch('/user/:id/role', authenticateToken, requireAdmin, require('../cont
 
 // POST /auth/user/:id/reset-password (admin only)
 router.post('/user/:id/reset-password', authenticateToken, requireAdmin, require('../controllers/authController').triggerPasswordReset);
+
+// GET /auth/students (admin only)
+router.get('/students', authenticateToken, requireAdmin, getAllStudents);
 
 module.exports = router; 

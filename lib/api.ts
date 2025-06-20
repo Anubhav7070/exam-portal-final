@@ -204,6 +204,10 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async getAllStudents(): Promise<User[]> {
+    return this.request<User[]>('/auth/students');
+  }
 }
 
 export const apiService = new ApiService(); 
