@@ -6,11 +6,13 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL CHECK (role IN ('admin', 'student')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Drop the password column if it exists
+ALTER TABLE users DROP COLUMN IF EXISTS password;
 
 -- Create exams table
 CREATE TABLE IF NOT EXISTS exams (
@@ -86,51 +88,48 @@ CREATE POLICY "Users can read own data" ON users
 FOR SELECT USING (auth.uid()::text = id::text);
 
 -- Allow anyone to create new users (for signup)
+DROP POLICY IF EXISTS "Anyone can create users" ON users;
 CREATE POLICY "Anyone can create users" ON users 
 FOR INSERT WITH CHECK (true);
 
--- Drop policies for other tables
-DROP POLICY IF EXISTS "Students can read exams" ON exams;
-DROP POLICY IF EXISTS "Admins can manage exams" ON exams;
-DROP POLICY IF EXISTS "Users can read own submissions" ON submissions;
-DROP POLICY IF EXISTS "Users can create own submissions" ON submissions;
-DROP POLICY IF EXISTS "Users can read own results" ON results;
-
 -- Create policies for other tables
 -- Students can read exams
+DROP POLICY IF EXISTS "Students can read exams" ON exams;
 CREATE POLICY "Students can read exams" ON exams FOR SELECT USING (true);
 
 -- Admins can manage exams
+DROP POLICY IF EXISTS "Admins can manage exams" ON exams;
 CREATE POLICY "Admins can manage exams" ON exams FOR ALL USING (
   EXISTS (SELECT 1 FROM users WHERE users.id::text = auth.uid()::text AND users.role = 'admin')
 );
 
 -- Users can read their own submissions
+DROP POLICY IF EXISTS "Users can read own submissions" ON submissions;
 CREATE POLICY "Users can read own submissions" ON submissions FOR SELECT USING (user_id::text = auth.uid()::text);
 
 -- Users can create their own submissions
+DROP POLICY IF EXISTS "Users can create own submissions" ON submissions;
 CREATE POLICY "Users can create own submissions" ON submissions FOR INSERT WITH CHECK (user_id::text = auth.uid()::text);
 
 -- Users can read their own results
+DROP POLICY IF EXISTS "Users can read own results" ON results;
 CREATE POLICY "Users can read own results" ON results FOR SELECT USING (user_id::text = auth.uid()::text);
 
 -- Insert sample admin user (password: admin123)
-INSERT INTO users (id, name, email, password, role) 
+INSERT INTO users (id, name, email, role) 
 VALUES (
     '550e8400-e29b-41d4-a716-446655440000',
     'Admin User',
     'admin@examportal.com',
-    '$2a$10$rQZ8N3YqX2vB1cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ5aB6cD7eF8gH',
     'admin'
 ) ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample student user (password: student123)
-INSERT INTO users (id, name, email, password, role) 
+INSERT INTO users (id, name, email, role) 
 VALUES (
     '660e8400-e29b-41d4-a716-446655440001',
     'Student User',
     'student@examportal.com',
-    '$2a$10$sRZ8N3YqX2vB1cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ5aB6cD7eF8gH',
     'student'
 ) ON CONFLICT (email) DO NOTHING;
 
