@@ -51,6 +51,13 @@ export default function AdminDashboard() {
   const [editUser, setEditUser] = useState<User | null>(null)
   const [editForm, setEditForm] = useState<{ firstName?: string; lastName?: string; email?: string; role?: string }>({})
   const [editLoading, setEditLoading] = useState(false)
+  const [showAddAdmin, setShowAddAdmin] = useState(false)
+  const [addAdminForm, setAddAdminForm] = useState({ name: '', email: '', password: '' })
+  const [addAdminLoading, setAddAdminLoading] = useState(false)
+  const [addAdminError, setAddAdminError] = useState('')
+  const [editExam, setEditExam] = useState<Exam | null>(null)
+  const [editExamForm, setEditExamForm] = useState<any>({})
+  const [editExamLoading, setEditExamLoading] = useState(false)
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -214,6 +221,66 @@ export default function AdminDashboard() {
       alert('Password reset email sent')
     } catch (err) {
       alert('Failed to send password reset email')
+    }
+  }
+
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAddAdminLoading(true)
+    setAddAdminError('')
+    try {
+      await apiService.signup({ ...addAdminForm, role: 'admin' })
+      setShowAddAdmin(false)
+      setAddAdminForm({ name: '', email: '', password: '' })
+      // Optionally, refetch users or add to users state
+      const users = await apiService.getAllUsers()
+      setUsers(users)
+      alert('Admin added successfully!')
+    } catch (err: any) {
+      setAddAdminError(err.message || 'Failed to add admin')
+    } finally {
+      setAddAdminLoading(false)
+    }
+  }
+
+  const handleEditExam = (exam: Exam) => {
+    setEditExam(exam)
+    setEditExamForm({
+      title: exam.title,
+      subject: exam.subject,
+      duration: exam.duration,
+      totalQuestions: exam.totalQuestions,
+      scheduledDate: exam.scheduledDate,
+      status: exam.status,
+    })
+  }
+
+  const handleEditExamFormChange = (field: string, value: any) => {
+    setEditExamForm({ ...editExamForm, [field]: value })
+  }
+
+  const handleEditExamFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editExam) return
+    setEditExamLoading(true)
+    try {
+      const updated = await apiService.updateExam(editExam.id, editExamForm)
+      setExams(exams.map(ex => ex.id === updated.id ? updated : ex))
+      setEditExam(null)
+    } catch (err) {
+      alert('Failed to update exam')
+    } finally {
+      setEditExamLoading(false)
+    }
+  }
+
+  const handleDeleteExam = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this exam?')) return
+    try {
+      await apiService.deleteExam(id)
+      setExams(exams.filter(ex => ex.id !== id))
+    } catch (err) {
+      alert('Failed to delete exam')
     }
   }
 
@@ -497,6 +564,136 @@ export default function AdminDashboard() {
             </table>
           </CardContent>
         </Card>
+
+        {/* Add Admin Button and Modal */}
+        <Button className="mb-4" onClick={() => setShowAddAdmin(true)}>Add Admin</Button>
+        <Dialog open={showAddAdmin} onOpenChange={setShowAddAdmin}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Admin</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddAdmin} className="space-y-4">
+              <Input
+                placeholder="Full Name"
+                value={addAdminForm.name}
+                onChange={e => setAddAdminForm({ ...addAdminForm, name: e.target.value })}
+                required
+              />
+              <Input
+                placeholder="Email"
+                type="email"
+                value={addAdminForm.email}
+                onChange={e => setAddAdminForm({ ...addAdminForm, email: e.target.value })}
+                required
+              />
+              <Input
+                placeholder="Password"
+                type="password"
+                value={addAdminForm.password}
+                onChange={e => setAddAdminForm({ ...addAdminForm, password: e.target.value })}
+                required
+              />
+              {addAdminError && <div className="text-red-600 text-xs">{addAdminError}</div>}
+              <DialogFooter>
+                <Button type="submit" disabled={addAdminLoading}>{addAdminLoading ? 'Adding...' : 'Add Admin'}</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Exam Management Table */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>All Exams</CardTitle>
+            <CardDescription>Manage all exams</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Questions</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {exams.map(exam => (
+                  <tr key={exam.id}>
+                    <td className="px-4 py-2">{exam.title}</td>
+                    <td className="px-4 py-2">{exam.subject}</td>
+                    <td className="px-4 py-2">{exam.duration} min</td>
+                    <td className="px-4 py-2">{exam.totalQuestions}</td>
+                    <td className="px-4 py-2">{exam.scheduledDate}</td>
+                    <td className="px-4 py-2">{exam.status}</td>
+                    <td className="px-4 py-2 flex gap-2">
+                      <Button size="sm" onClick={() => handleEditExam(exam)}>Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDeleteExam(exam.id)}>Delete</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        {/* Edit Exam Modal */}
+        <Dialog open={!!editExam} onOpenChange={open => !open && setEditExam(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Exam</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditExamFormSubmit} className="space-y-4">
+              <Input
+                placeholder="Title"
+                value={editExamForm.title || ''}
+                onChange={e => handleEditExamFormChange('title', e.target.value)}
+                required
+              />
+              <Input
+                placeholder="Subject"
+                value={editExamForm.subject || ''}
+                onChange={e => handleEditExamFormChange('subject', e.target.value)}
+                required
+              />
+              <Input
+                placeholder="Duration (min)"
+                type="number"
+                value={editExamForm.duration || ''}
+                onChange={e => handleEditExamFormChange('duration', e.target.value)}
+                required
+              />
+              <Input
+                placeholder="Total Questions"
+                type="number"
+                value={editExamForm.totalQuestions || ''}
+                onChange={e => handleEditExamFormChange('totalQuestions', e.target.value)}
+                required
+              />
+              <Input
+                placeholder="Scheduled Date"
+                type="datetime-local"
+                value={editExamForm.scheduledDate || ''}
+                onChange={e => handleEditExamFormChange('scheduledDate', e.target.value)}
+                required
+              />
+              <Select value={editExamForm.status} onValueChange={val => handleEditExamFormChange('status', val)}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+              <DialogFooter>
+                <Button type="submit" disabled={editExamLoading}>{editExamLoading ? 'Saving...' : 'Save'}</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Edit User Modal */}

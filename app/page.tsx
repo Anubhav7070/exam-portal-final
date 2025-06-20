@@ -200,6 +200,20 @@ export default function HomePage() {
     }
   }
 
+  // Add resend OTP handler
+  const handleResendSignupOtp = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      await apiService.sendVerificationOTP(verifyEmail)
+      alert("OTP resent to your email.")
+    } catch (err: any) {
+      setError(err.message || "Failed to resend OTP.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Check if signup form is complete
   const isSignupComplete = signupData.name && signupData.email && signupData.password
   const isLoginComplete = loginData.email && loginData.password && loginData.role
@@ -458,6 +472,10 @@ export default function HomePage() {
                             onChange={(e) => setOtp(e.target.value)}
                             required
                           />
+                          <div className="text-xs text-gray-600">We've sent an OTP to your email. Please enter it below to verify your account.</div>
+                          <button type="button" className="text-xs text-blue-600 underline mt-2" onClick={handleResendSignupOtp} disabled={loading}>
+                            {loading ? "Resending..." : "Resend OTP"}
+                          </button>
                         </div>
                         <Button type="submit" className="w-full" disabled={!otp || loading}>
                           {loading ? "Verifying..." : "Verify Email"}

@@ -191,6 +191,19 @@ class ApiService {
       body: JSON.stringify({ email, code, newPassword }),
     });
   }
+
+  async updateExam(id: string, data: any): Promise<any> {
+    return this.request<any>(`/exams/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteExam(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/exams/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService(); 
