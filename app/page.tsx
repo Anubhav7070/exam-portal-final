@@ -30,6 +30,11 @@ export default function HomePage() {
   const [error, setError] = useState("")
   const router = useRouter()
 
+  // VIT SmartBot navigation
+  const navigateToChatbot = () => {
+    router.push('/chatbot')
+  }
+
   // Add new state for OTP flows
   const [showVerify, setShowVerify] = useState(false)
   const [verifyEmail, setVerifyEmail] = useState("")
@@ -241,6 +246,42 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+
+      {/* VIT SmartBot Hero Section */}
+      <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-4">🤖 VIT SmartBot</h2>
+            <p className="text-xl mb-6">Your intelligent assistant for VIT Vellore campus life</p>
+            <p className="text-lg opacity-90 mb-8">Get instant help with hostel facilities, placements, courses, faculty contacts, and campus navigation!</p>
+            <Button 
+              onClick={navigateToChatbot}
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3 mb-4"
+            >
+              💬 Chat with VIT SmartBot
+            </Button>
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="bg-white/10 rounded-lg p-3">
+                <div className="font-semibold">🏠 Hostel Info</div>
+                <div className="opacity-80">Facilities & Amenities</div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-3">
+                <div className="font-semibold">💼 Placements</div>
+                <div className="opacity-80">Stats & Companies</div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-3">
+                <div className="font-semibold">📚 Courses</div>
+                <div className="opacity-80">Programs & Faculty</div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-3">
+                <div className="font-semibold">🗺️ Navigation</div>
+                <div className="opacity-80">Campus Maps</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
