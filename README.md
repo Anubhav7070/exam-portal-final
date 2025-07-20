@@ -1,146 +1,313 @@
-# Examinia
+# VIT SmartBot 🤖
 
-An advanced online examination platform built with Next.js for the frontend and a Node.js/Express backend, featuring role-based access control for administrators and students. The backend is powered by Supabase for database and authentication services.
+**VIT SmartBot** is an intelligent chatbot designed specifically for VIT Vellore students to help resolve doubts about hostel life, courses, placements, faculty, and campus navigation. Built with Next.js, TypeScript, and MongoDB, it features natural language processing, a modern UI, and extensive VIT-specific knowledge.
 
 ## ✨ Features
 
-- **User Authentication**: Secure user signup and login for admins and students.
-- **Role-Based Access Control**: Separate dashboards and functionalities for administrators and students.
-- **Exam Management (Admin)**: Create, view, update, and delete exams.
-- **Question Management (Admin)**: Add and manage questions for each exam.
-- **Student Dashboard**: View available exams and past results.
-- **Secure Testing Environment**: Students can take exams with timed submissions.
-- **Automated Grading**: Instant results and performance analytics upon submission.
-- **Responsive UI**: Built with Shadcn/UI and Tailwind CSS for a modern and accessible user experience.
+### 🎯 Core Functionality
+- **Natural Language Processing**: Understands student queries in conversational language
+- **Multi-Category Support**: Handles questions about:
+  - 🏠 Hostel life and facilities
+  - 📚 Courses and academic programs
+  - 💼 Placements and career guidance
+  - 👨‍🏫 Faculty contact information
+  - 🗺️ Campus navigation
+  - 📅 Events and activities
+  - 💰 Fee deadlines and payments
 
-## 🛠️ Tech Stack
+### 🎨 User Interface
+- **Modern Design**: Clean, responsive interface with Tailwind CSS
+- **Quick Questions**: Pre-built common queries for instant help
+- **Real-time Chat**: Smooth messaging experience with typing indicators
+- **Category Badges**: Visual indicators for different types of queries
+- **Message History**: Persistent chat history during session
 
-- **Frontend**: [Next.js](https://nextjs.org/), [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/), [Shadcn/UI](https://ui.shadcn.com/)
-- **Backend**: [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/)
-- **Database**: [Supabase](https://supabase.com/) (PostgreSQL)
-- **Authentication**: JWT (JSON Web Tokens) & bcrypt for password hashing.
-- **Package Manager**: [pnpm](https://pnpm.io/)
+### 🗄️ Data Management
+- **MongoDB Integration**: Stores events, fee deadlines, and placement statistics
+- **Fallback Responses**: Comprehensive fallback data when database is unavailable
+- **Real-time Data**: Fetches current information about events and deadlines
+
+### 🚀 Future-Ready
+- **VTOP Integration Ready**: Placeholder for student portal integration
+- **Google Maps Support**: Campus navigation with map integration
+- **Extensible Architecture**: Easy to add new features and data sources
+
+## 🛠️ Technology Stack
+
+- **Frontend**: Next.js 15, React 18, TypeScript
+- **UI Framework**: Tailwind CSS, Radix UI components
+- **Backend**: Next.js API routes
+- **Database**: MongoDB with Mongoose
+- **NLP**: Natural language processing library
+- **Icons**: Lucide React
+- **Styling**: Modern gradients and animations
 
 ## 📋 Prerequisites
 
-Before you begin, ensure you have the following installed on your local machine:
-- [Node.js](https://nodejs.org/en/) (v18.x or later recommended)
-- [pnpm](https://pnpm.io/installation) (or you can use `npm` or `yarn`)
-- A [Supabase](https://supabase.com/) account to set up the database.
+- Node.js 18+ and npm/yarn/pnpm
+- MongoDB (local installation or MongoDB Atlas)
+- Git
 
-## 🚀 Getting Started
-
-Follow these steps to set up and run the project locally.
+## 🚀 Installation & Setup
 
 ### 1. Clone the Repository
-
 ```bash
-git clone https://github.com/Anubhav7070/exam-portal-final.git
-cd exam-portal-final
+git clone <repository-url>
+cd vit-smartbot
 ```
 
-### 2. Set Up the Backend
-
-The backend server connects to Supabase and handles all the API logic.
-
+### 2. Install Dependencies
 ```bash
-cd exam-portal-backend
+npm install
+# or
+yarn install
+# or
 pnpm install
 ```
 
-#### Create the `.env` file
-
-You'll need to create a `.env` file in the `exam-portal-backend` directory. You can create a new file named `.env` and add the following content:
-
-```env
-# Supabase Credentials
-SUPABASE_URL=YOUR_SUPABASE_URL
-SUPABASE_KEY=YOUR_SUPABASE_ANON_KEY
-
-# JWT Secret for token signing
-JWT_SECRET=your_strong_jwt_secret
-
-# Server Port
-PORT=5000
-```
-
-Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` with your actual Supabase project credentials. You can find these in your Supabase project dashboard under `Project Settings > API`.
-
-### 3. Set Up the Supabase Database
-
-The database schema and initial security policies need to be set up in your Supabase project.
-
-1.  Navigate to your Supabase project dashboard.
-2.  Go to the **SQL Editor** from the left sidebar.
-3.  Open the `exam-portal-backend/setup-database.sql` file from this repository.
-4.  Copy its entire content, paste it into the SQL editor, and click **RUN**.
-
-This will create all the necessary tables (`users`, `exams`, etc.) and apply the required Row Level Security (RLS) policies.
-
-### 4. Set Up the Frontend
-
-The frontend is a Next.js application.
-
+### 3. Environment Configuration
 ```bash
-cd .. 
-pnpm install
+# Copy the example environment file
+cp .env.local.example .env.local
+
+# Edit .env.local with your MongoDB connection string
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=vit_smartbot
 ```
 
-### 5. Running the Application
-
-You need to run both the backend and frontend servers simultaneously.
-
-#### Start the Backend Server
-
+### 4. Start MongoDB
+Make sure MongoDB is running on your system:
 ```bash
-cd exam-portal-backend
-pnpm start 
+# For local MongoDB
+mongod
+
+# Or use MongoDB Atlas cloud connection
 ```
-The backend will be running on `http://localhost:5000` (or the port you specified in `.env`).
 
-#### Start the Frontend Server
-
-In a **new terminal**, run:
-
+### 5. Initialize Database
 ```bash
-pnpm dev
+# Start the development server first
+npm run dev
+
+# Then initialize the database with sample data
+curl -X POST http://localhost:3000/api/init-db
 ```
-The frontend application will be available at `http://localhost:3000`.
 
-You should now be able to access the application in your browser, create a new user, and log in.
+### 6. Access the Application
+Open [http://localhost:3000/chatbot](http://localhost:3000/chatbot) in your browser.
 
-## ⚙️ Available Scripts
-
-### Backend (`exam-portal-backend`)
-
-- `pnpm start`: Starts the backend server using `node app.js`.
-- `pnpm dev`: Starts the backend server in development mode with `nodemon`.
-- `pnpm test:env`: Checks if the environment variables are loaded correctly from the `.env` file.
-- `pnpm test:connection`: Tests the connection to the Supabase database.
-- `pnpm test:db`: Runs a more detailed database check.
-
-### Frontend
-
-- `pnpm dev`: Starts the Next.js development server.
-- `pnpm build`: Builds the application for production.
-- `pnpm start`: Starts a production server.
-- `pnpm lint`: Runs ESLint for code analysis.
-
-## 📂 Project Structure
+## 📁 Project Structure
 
 ```
-exam-portal/
-├── app/                  # Frontend: Next.js 13 App Router pages
-├── components/           # Frontend: Shared React components
-├── exam-portal-backend/
-│   ├── controllers/      # Backend: API logic (signup, login, etc.)
-│   ├── db/               # Backend: Supabase client setup
-│   ├── middleware/       # Backend: Express middleware
-│   ├── routes/           # Backend: API route definitions
-│   ├── app.js            # Backend: Main Express server file
-│   └── setup-database.sql # SQL script for DB schema
-├── hooks/                # Frontend: Custom React hooks
-├── lib/                  # Frontend: Helper functions and utilities
-├── public/               # Frontend: Static assets
-└── ...
-``` 
+vit-smartbot/
+├── app/
+│   ├── api/
+│   │   ├── chatbot/          # Main chatbot API
+│   │   └── init-db/          # Database initialization
+│   ├── chatbot/              # Chatbot page
+│   └── globals.css
+├── components/
+│   └── ui/                   # Reusable UI components
+├── lib/
+│   ├── mongodb.ts            # Database connection & sample data
+│   ├── nlp.ts               # Natural language processing
+│   └── vit-data.ts          # VIT-specific data & utilities
+├── .env.local.example        # Environment variables template
+└── README.md
+```
+
+## 🎮 Usage
+
+### Basic Chat
+1. Open the chatbot interface
+2. Type your question in natural language
+3. Get instant responses with relevant information
+
+### Quick Questions
+- Click on pre-built question buttons for common queries
+- Each category (hostel, placements, etc.) has dedicated quick access
+
+### Sample Questions to Try
+- "What are the hostel facilities?"
+- "Tell me about placement statistics"
+- "How do I contact CSE faculty?"
+- "What courses are available?"
+- "Show me upcoming events"
+- "When are the fee deadlines?"
+- "Help me navigate to the library"
+
+## 🧠 Natural Language Processing
+
+The bot uses sophisticated NLP to understand:
+- **Intent Recognition**: Identifies what the user wants to know
+- **Entity Extraction**: Extracts specific information (departments, dates, amounts)
+- **Context Awareness**: Maintains conversation context
+- **Confidence Scoring**: Provides relevant responses based on understanding level
+
+### Supported Intents
+- `query_hostel_facilities`
+- `query_placements`
+- `query_courses`
+- `query_faculty`
+- `query_events`
+- `query_fees`
+- `query_campus_navigation`
+
+## 🗃️ Database Schema
+
+### Events Collection
+```javascript
+{
+  title: "Event Name",
+  description: "Event description",
+  date: Date,
+  time: "10:00 AM",
+  venue: "Venue Name",
+  category: "cultural|technical|academic|sports",
+  registrationRequired: Boolean
+}
+```
+
+### Fee Deadlines Collection
+```javascript
+{
+  type: "Fee Type",
+  amount: Number,
+  deadline: Date,
+  description: "Fee description",
+  category: "academic|hostel|examination",
+  lateFeePenalty: Number
+}
+```
+
+### Placement Statistics Collection
+```javascript
+{
+  year: 2024,
+  placement_percentage: 96.5,
+  highest_package: 75.0,
+  average_package: 8.5,
+  companies_count: 520,
+  top_companies: ["Company1", "Company2"],
+  sectors: { IT: 65, core: 20, consulting: 10, research: 5 }
+}
+```
+
+## 🔮 Future Enhancements
+
+### Phase 1: VTOP Integration
+- **Student Authentication**: Login with VIT credentials
+- **Personal Data**: Access to CGPA, attendance, timetable
+- **Exam Schedules**: Personalized exam information
+- **Course Registration**: Help with course selection
+
+### Phase 2: Advanced Campus Navigation
+- **Real-time Location**: GPS-based navigation
+- **Interactive Maps**: Detailed campus maps with search
+- **Shuttle Tracking**: Real-time shuttle bus locations
+- **Route Optimization**: Best paths between locations
+
+### Phase 3: Enhanced AI Features
+- **Voice Interface**: Speech-to-text and text-to-speech
+- **Multilingual Support**: Tamil and Hindi language support
+- **Predictive Assistance**: Proactive suggestions and reminders
+- **Learning Analytics**: Personalized academic recommendations
+
+### Phase 4: Community Features
+- **Student Forums**: Integrated discussion boards
+- **Peer Matching**: Connect students with similar interests
+- **Event RSVP**: Direct event registration
+- **Feedback System**: Continuous improvement through user feedback
+
+## 🔧 API Endpoints
+
+### Chatbot API
+```
+POST /api/chatbot
+Body: { message: string, category?: string }
+Response: { response: string, category: string, intent: string, confidence: number }
+```
+
+### Database Initialization
+```
+POST /api/init-db
+Response: { message: string, status: string }
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+- Follow TypeScript best practices
+- Add proper error handling
+- Write descriptive commit messages
+- Test your changes thoroughly
+- Update documentation as needed
+
+## 📝 Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `MONGODB_URI` | MongoDB connection string | Yes | `mongodb://localhost:27017` |
+| `MONGODB_DB` | Database name | Yes | `vit_smartbot` |
+| `NODE_ENV` | Environment mode | No | `development` |
+| `VTOP_API_URL` | VTOP API endpoint (future) | No | - |
+| `VTOP_API_KEY` | VTOP API key (future) | No | - |
+| `GOOGLE_MAPS_API_KEY` | Google Maps API key (future) | No | - |
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Database Connection Error**
+```bash
+# Check if MongoDB is running
+mongod --version
+# Verify connection string in .env.local
+```
+
+**Missing Dependencies**
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**API Route Not Found**
+```bash
+# Ensure you're running the development server
+npm run dev
+# Check the API route exists in app/api/
+```
+
+**NLP Library Issues**
+```bash
+# Install natural language processing dependencies
+npm install natural
+# Check for Node.js compatibility
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👥 Support
+
+For support, email support@vitsmartbot.com or join our Discord community.
+
+## 🙏 Acknowledgments
+
+- VIT Vellore for the inspiration and data
+- The open-source community for amazing tools and libraries
+- Students who will use and improve this bot
+
+---
+
+**Made with ❤️ for VIT Vellore students**
+
+*VIT SmartBot - Making campus life easier, one question at a time!*
